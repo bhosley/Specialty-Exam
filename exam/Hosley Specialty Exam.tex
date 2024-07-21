@@ -17,11 +17,13 @@
 \usepackage{hyperref}
 \usepackage{cleveref}
 \usepackage[style=ieee]{biblatex}       % bibliographies
-\addbibresource{/Users/brandonhosley/Documents/GitHub/Schoolwork/Drafts/Mini Prospectus/other/Prospectus.bib}
+\addbibresource{../../Schoolwork/Drafts/Mini Prospectus/other/Prospectus.bib}
+
 % --- Other Common Packages ---
 %\usepackage{booktabs}
 \usepackage{graphicx}
 \graphicspath{{../figures/}}
+\usepackage{subcaption}
 %\usepackage{multicol}
 %\usepackage[shortlabels]{enumitem}
 %\usepackage[table]{xcolor}
@@ -36,6 +38,14 @@
 %\newcommand\chapter{ X }
 \renewcommand{\thequestion}{\textbf{\thesection.\arabic{question}}}
 \renewcommand{\questionlabel}{\thequestion}
+
+\usepackage{xpatch}	% This hides the multiple label warning from having
+\makeatletter		% multiple question sections.
+\xpatchcmd{\questions}
+  {question@\arabic{question}}
+  {question@\arabic{section}@\arabic{question}}
+  {}{}
+\makeatother
 
 % -------------------------------- Top Matter -------------------------------- %
 \newcommand{\class}{PhD Specialty} % This is the name of the course 
@@ -60,6 +70,7 @@
 
 % ----------------------------------- Body ----------------------------------- %
 \tableofcontents
+\hspace*{1em}
 \hrule
 
 
@@ -191,18 +202,58 @@ Below, I apply these distinctions to the cases proposed:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-
 \section{Dr. Robbins' Questions}
+
+
+\begin{questions}
+\setcounter{question}{0}
+	\question
+	% deep Q-network (DQN)
+	% Single-agent Lunar Lander
+\end{questions}
+
+
+
+\subsection*{Multi-Agent Lunar Lander}
+\label{sec:ma-lander}
+\addcontentsline{toc}{subsection}{\nameref{sec:ma-lander}}
+
 
 
 
 \begin{figure}[h]
-	\includegraphics[width=.3\linewidth]{single_lander.png}
-	\caption{Lunar Lander}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=.8\linewidth]{single_lander.png}
+		\caption{Lunar Lander}
+	\end{subfigure}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=.8\linewidth]{dual_lander.png}
+		\caption{Lunar Lander}
+	\end{subfigure}
+	\label{fig:landers}
 \end{figure}
 
 
 
+
+
+
+
+%\begin{questions}
+%	\setcounter{question}{1}
+%	\question x% Formulate a Markov Game
+%	\question x% (DQN Single-Agent Controller)
+%	\question x% (NoPS – No Parameter Sharing)
+%	\question x% (FuPS – Full Parameter Sharing)
+%	\question x% Results Comparisons
+%\end{questions}
+
+
 \section{Dr. Cox's Questions}
+%\begin{questions}
+%	\question
+%\end{questions}
 
 \end{document}

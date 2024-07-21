@@ -44,9 +44,7 @@ LEG_SPRING_TORQUE = 40
 
 SIDE_ENGINE_HEIGHT = 14
 SIDE_ENGINE_AWAY = 12
-MAIN_ENGINE_Y_LOCATION = (
-    4  # The Y location of the main engine on the body of the Lander.
-)
+MAIN_ENGINE_Y_LOCATION = 4 # The Y loc of the main engine on the lander body.
 
 VIEWPORT_W = 600
 VIEWPORT_H = 400
@@ -84,7 +82,7 @@ class SequentialEnv(AECEnv, EzPickle):
     metadata = {
         "render_modes": ["human", "rgb_array"],
         "name": "multi_lander_v0",
-        "is_parallelizable": False,
+        "is_parallelizable": True,
         "render_fps": FPS,
     }
 
@@ -130,30 +128,21 @@ class SequentialEnv(AECEnv, EzPickle):
                 "turbulence_power value is recommended to be between 0.0 and " +
                 f"2.0, (current value: {turbulence_power})"
             )
-
         # These are bounds for position realistically the environment
         # should have ended long before we reach more than 50% outside
         low = np.array(
             [
-                -2.5,  # x coordinate
-                -2.5,  # y coordinate
-                -10.0, # velocity bounds is 5x rated speed
-                -10.0,
-                -2 * math.pi,
-                -10.0,
-                -0.0,
-                -0.0,
+                -2.5, -2.5,             # x,y coordinates
+                -10.0, -10.0,           # x,y velocity bounds is 5x rated speed
+                -2 * math.pi, -10.0,    # Angle, Angular Velocity
+                -0.0, -0.0,             # L,R Leg not on ground  
             ]).astype(np.float32)
         high = np.array(
             [
-                2.5,  # x coordinate
-                2.5,  # y coordinate
-                10.0, # velocity bounds is 5x rated speed
-                10.0,
-                2 * math.pi,
-                10.0,
-                1.0,
-                1.0,
+                2.5, 5.0, # 2.5,        # x,y coordinates 
+                10.0, 10.0,             # x,y velocity bounds is 5x rated speed
+                2 * math.pi, 10.0,      # Angle, Angular Velocity
+                1.0, 1.0,               # L,R Leg on ground  
             ]).astype(np.float32)
 
         # Environmental Variables
@@ -178,21 +167,20 @@ class SequentialEnv(AECEnv, EzPickle):
         self._agent_selector = agent_selector(self.agents)
 
         # Spaces
-        self.observation_space = spaces.Box(low, high)
         self.observation_spaces = dict(zip(self.agents, 
-                                    [self.observation_space]*self.num_agents))
+                                    [spaces.Box(low, high)]*self.num_agents))
         if self.continuous:
             # Action is two floats [main engine, left-right engines].
             # Main engine: -1..0 off, 0..+1 throttle from 50% to 100% power. 
             #               Engine can't work with less than 50% power.
             # Left-right:  -1.0..-0.5 fire left engine, +0.5..+1.0 fire right 
             #               engine, -0.5..0.5 off
-            self.action_space = spaces.Box(-1, +1, (2,), dtype=np.float32)
+            self._action_space = spaces.Box(-1, +1, (2,), dtype=np.float32)
         else:
-            # Nop, fire left engine, main engine, right engine
-            self.action_space = spaces.Discrete(4)
+            # No-op, fire left engine, main engine, right engine
+            self._action_space = spaces.Discrete(4)
         self.action_spaces = dict(zip(self.agents, 
-                                      [self.action_space]*self.num_agents))
+                                      [self._action_space]*self.num_agents))
 
     def observation_space(self, agent):
         return self.observation_spaces[agent]
@@ -482,8 +470,9 @@ class SequentialEnv(AECEnv, EzPickle):
             True,
         )
         self.drawlist = self.legs + self.landers
-
         if self.render_mode == "human": self.render()
+
+        self.agents = self.possible_agents[:]
         self._agent_selector = agent_selector(self.agents)
         self.agent_selection = self._agent_selector.next()
         self.rewards = {agent: 0 for agent in self.agents}
@@ -492,7 +481,7 @@ class SequentialEnv(AECEnv, EzPickle):
         self.truncations = {agent: False for agent in self.agents}
         self.infos = {agent: {} for agent in self.agents}
 
-        return self.observe()
+        return self.observe(), None
     # End reset()
 
 
@@ -586,9 +575,7 @@ class SequentialEnv(AECEnv, EzPickle):
             action = np.clip(action, -1, +1).astype(np.float64)
         else:
             assert self.action_spaces[agent].contains(
-            #assert self.action_space.contains(
-                action
-            ), f"{action!r} ({type(action)}) invalid "
+                action), f"{action!r} ({type(action)}) invalid "
 
         # Tip is the (X and Y) components of the rotation of the lander.
         tip = (math.sin(lander.angle), math.cos(lander.angle))
@@ -724,10 +711,23 @@ class SequentialEnv(AECEnv, EzPickle):
 
 class Parallel_Env(SequentialEnv):
     def observe(self):
-        obs_list = {}
-        for agent in self.agents:
-            obs_list[agent] = super().observe(agent)
-        return obs_list
+        obs_list = []
+        for i,lander in enumerate(self.landers):
+            pos = lander.position
+            vel = lander.linearVelocity
+            obs = [
+                (pos.x - VIEWPORT_W/SCALE/2) / (VIEWPORT_W/SCALE/2),
+                (pos.y - (self.helipad_y + LEG_DOWN/SCALE)) / (VIEWPORT_H/SCALE/2),
+                vel.x * (VIEWPORT_W/SCALE/2) / FPS,
+                vel.y * (VIEWPORT_H/SCALE/2) / FPS,
+                lander.angle,
+                20.0 * lander.angularVelocity / FPS,
+                1.0 if self.legs[i*2+0].ground_contact else 0.0,
+                1.0 if self.legs[i*2+1].ground_contact else 0.0,
+            ]
+            assert len(obs) == 8
+            obs_list.append(obs)
+        return dict(zip(self.possible_agents,obs_list))
 
     def last(self):
         return self.observe()
@@ -769,18 +769,16 @@ class Parallel_Env(SequentialEnv):
                     True,
                 )
 
-        for agent in self.agents:
+        #for agent in self.agents:
+        for agent,action in action_list.items():
             # For current agent:
             lander = self.landers[self.agent_name_mapping[agent]]
-            action = action_list[agent]
             # Check action validity
             if self.continuous:
                 action = np.clip(action, -1, +1).astype(np.float64)
             else:
                 assert self.action_spaces[agent].contains(
-                #assert self.action_space.contains(
-                    action
-                ), f"{action!r} ({type(action)}) invalid "
+                    action), f"{action!r} ({type(action)}) invalid "
 
             # Tip is the (X and Y) components of the rotation of the lander.
             tip = (math.sin(lander.angle), math.cos(lander.angle))
@@ -893,11 +891,11 @@ class Parallel_Env(SequentialEnv):
         # Update Positions
         self.world.Step(1.0 / FPS, 6 * 30, 2 * 30)
 
-        #observation = self.observe(agent)
         obs_list = self.observe()
 
         for agent in self.agents:
             obs = obs_list[agent]
+            lander = self.landers[self.agent_name_mapping[agent]]
             self.rewards[agent] += self.latest_reward_state(agent, obs)
             if self.game_over or abs(obs[0]) >= 1.0:
                 self.terminations[agent] = True
@@ -911,7 +909,7 @@ class Parallel_Env(SequentialEnv):
         if self.render_mode == "human":
             self.render()
         # truncation=False as the time limit is handled by the `TimeLimit` 
-        return obs_list, self.rewards, all(self.terminations), False, {}
+        return obs_list, self.rewards, self.terminations, self.truncations, {}
 
 
 def heuristic(env, s):
@@ -1004,15 +1002,15 @@ def demo_parallel_heuristic(env, reps=1, seed=None, render=False):
         obs = env.last()
         while True:
             actions = {agent: heuristic(env, obs[agent]) for agent in env.agents}
-            obs, r, terminated, truncated, info = env.step(actions)
+            obs, r, terminateds, truncateds, info = env.step(actions)
             total_reward += sum(r.values())
-
+            
             if render:
                 still_open = env.render()
                 if still_open is False:
                     break
 
-            if steps % 20 == 0 or terminated or truncated:
+            if steps % 20 == 0 or all(terminateds) or all(truncateds):
                 for agent in env.agents:
                     print(f"{agent} observations:", " ".join([f"{x:+0.2f}" for x in obs[agent]]))
                 print(f"step {steps} total_reward {total_reward:+0.2f}")
@@ -1025,12 +1023,14 @@ def demo_parallel_heuristic(env, reps=1, seed=None, render=False):
         env.close()
     return total_reward
 
-def env(**kwargs):
-    return SequentialEnv(**kwargs)
-
 def parallel_env(**kwargs):
     return Parallel_Env(**kwargs)
 
+def sequential_env(**kwargs):
+    return SequentialEnv(**kwargs)
+
+def env(**kwargs):
+    return Parallel_Env(**kwargs)
 
 if __name__ == "__main__":
     import argparse
@@ -1045,7 +1045,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.sequential:
-        _env = env(render_mode="human", num_landers=args.num_landers)
+        _env = sequential_env(render_mode="human", num_landers=args.num_landers)
         demo_heuristic_lander(_env, reps=args.demo_iters, render=True)
     else:
         _env = parallel_env(render_mode="human", num_landers=args.num_landers)
