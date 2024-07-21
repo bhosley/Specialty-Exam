@@ -2,10 +2,20 @@
 
 # update environment's package manager
 apt update && apt upgrade -y
-python3 -m pip install --upgrade pip
 
 # install python requirements
-python3 -m pip install -r requirements.txt
+apt install -y python3-pip
+python3 -m pip install --upgrade pip
+#python3 -m pip install -r requirements.txt
+# Due to dependency issues .txt method will not work
+# Python libs must be installed in groups
+
+pip install numpy 
+pip install swig
+pip install box2d-py
+pip install gymnasium[box2d]
+pip install pettingzoo
+pip install ray[rllib,tune,air]
 
 # install WandB if it will be used
 echo -e "\n\n"
@@ -22,4 +32,4 @@ case $yesno in
     ;;
 esac
 
-echo -e "\nSetup complete"
+printf "\nSetup complete"
