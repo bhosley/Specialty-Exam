@@ -1,0 +1,6 @@
+numpy
+
+swig
+box2d-py
+gymnasium[box2d]
+ray[rllib,tune,air]
