@@ -10,7 +10,8 @@ python3 -m pip install --upgrade pip
 # Due to dependency issues .txt method will not work
 # Python libs must be installed in groups
 
-pip install numpy 
+pip install numpy==1.24.3
+pip install torch
 pip install swig
 pip install box2d-py
 pip install gymnasium[box2d]

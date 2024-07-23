@@ -24,7 +24,7 @@ For logging to your WandB account, use:
 python dqn_exp.py \
     --num-env-runners=5 \
     --stop-reward=200 \
-    --wandb-key= \
+    --wandb-key=913528a8e92bf601b6eb055a459bcc89130c7f5f \
     --wandb-project=lunar_lander_test
 
 tensorboard --logdir logs/fit
@@ -40,8 +40,6 @@ from gymnasium import Wrapper, spaces
 from argparse import ArgumentParser
 
 from ray import tune
-from ray.air.integrations.wandb import WandbLoggerCallback
-from ray.rllib.algorithms.dqn import DQNConfig
 from ray.rllib.core.rl_module.rl_module import SingleAgentRLModuleSpec
 from ray.rllib.core.rl_module.marl_module import MultiAgentRLModuleSpec
 from ray.rllib.env.wrappers.pettingzoo_env import ParallelPettingZooEnv 
@@ -54,9 +52,9 @@ import multi_lander
 
 parser = add_rllib_example_script_args(
     ArgumentParser(conflict_handler='resolve'), # Resolve for num_agents
-    default_reward=0.0, 
-    default_iters=100, #100, #200
-    default_timesteps=100000, #10000, #100000
+    default_reward=600.0, 
+    default_iters=500, #100, #200
+    default_timesteps=1000000, #10000, #100000
 )
 parser.add_argument(
     "--control",
@@ -65,7 +63,7 @@ parser.add_argument(
     default="Baseline",
     help="The controller method."
     "`Baseline`: Original Lunar Lander with single agent and lander"
-    "`SA`: A single agent controlls all of the landers."
+    "`SA`: A single agent controls all of the landers."
     "`NoPS`: No parameter sharing between the agents."
     "`FuPS`: Full parameter sharing between the agents.",
 )
@@ -85,6 +83,10 @@ parser.add_argument(
     "--num-agents", type=int, default=2,
     help="The number of agents",
 )
+parser.add_argument(
+    "--sweep", action="store_true",
+    help="Perform a parameter sweep instead of using tune",
+)
 
 
 class CustomWrapper(ParallelPettingZooEnv):
@@ -98,18 +100,18 @@ class CustomWrapper(ParallelPettingZooEnv):
     It also adds the necessary `__all__` key to the done dictionaries.
     """
     def step(self, action_dict) -> tuple:
-        obss, rews, terminateds, truncateds, infos = self.par_env.step(action_dict)
+        obs, rew, terminateds, truncateds, info = self.par_env.step(action_dict)
 
         active = [a_id for a_id,term in terminateds.items() if term==False]
 
-        obss = {a_id: obss.get(a_id) for a_id in active}
-        rews = {a_id: rews.get(a_id) for a_id in active}
+        obs_s = {a_id: obs.get(a_id) for a_id in active}
+        rew_s = {a_id: rew.get(a_id) for a_id in active}
         terminateds = {a_id: terminateds.get(a_id) for a_id in active}
         truncateds = {a_id: truncateds.get(a_id) for a_id in active}
         
         terminateds["__all__"] = all(terminateds.values())
         truncateds["__all__"] = all(truncateds.values())
-        return obss, rews, terminateds, truncateds, infos
+        return obs_s, rew_s, terminateds, truncateds, info
 
 # Registry is necessary for functional passing later.
 register_env("ma-lander", lambda _: CustomWrapper(multi_lander.Parallel_Env()))
@@ -152,12 +154,14 @@ class SingleAgentWrapper(Wrapper):
         return self.observe(), {}
 
     def step(self, action:int) -> tuple:
-        action_list = {a: divmod(int(action/(self._act_n**i)),self._act_n)[1] 
+        action_list = {a: int(action/(self._act_n**i))%self._act_n
                         for i,a in enumerate(self.agents)}
         obss, rews, terminations, _, _ = self.env.step(action_list)
         obs = self.observe()
         reward = sum(rews.values())
-        term = all(terminations.values()) or self.env.game_over
+        term = (all(terminations.values()) or self.env.game_over 
+            or np.any(obs <= self.observation_space.low) 
+            or np.any(obs >= self.observation_space.high))
         return obs, reward, term, False, {}
 
 # Registry is necessary for functional passing later.
@@ -195,7 +199,7 @@ if __name__ == "__main__":
             )
             .rl_module(
                 rl_module_spec=MultiAgentRLModuleSpec(
-                    module_specs={p: SingleAgentRLModuleSpec() for p in policies},
+                   module_specs={p:SingleAgentRLModuleSpec() for p in policies},
                 ),
             )
             .environment(
@@ -225,24 +229,27 @@ if __name__ == "__main__":
     else:
         config = (
         base_config
-        .environment(env="LunarLander-v2")
-        #.training(**param_space)
+        .environment(
+            # env="lunar-lander"
+            "ma-lander",
+            env_config={"num_landers": 1}
+        )
     )
-    
+
+    # Parameter sweep settings
+    if args.sweep:
+        param_space = {
+            "adam_epsilon": tune.loguniform(1e-4, 1e-10), # 1e-8
+            "sigma0": tune.randn(0.5, 0.2), # 0.5
+            "n_step": tune.choice([2**i for i in range(5)]), # 1
+            # Update the target by \tau * policy + (1-\tau) * target_policy.
+            "tau": tune.uniform(0.0,1.0), # 1.0,
+            #epsilon = [(0, 1.0), (10000, 0.05)]    [(step,epsilon),...]
+            # -> 1.0 at beginning, decreases to 0.05 over 10k steps
+        }
+        config = config.training(**param_space)
+        # Use Param sweep, not tune
+        #args.no_tune = True
+
     # Call experiment runner
-    results = run_rllib_example_script_experiment(config, args)
-    print(results.get_best_result(metric="episode_return_mean", mode="max").config)
-
-
-
-
-
-
-
-param_space = {
-    "adam_epsilon": tune.loguniform(1e-4, 1e-10), # 1e-8
-    "sigma0": tune.randn(0.5, 0.2) # 0.5
-    #n_step = tune.choice([i for i**range(5)]) 1, # 1
-    #tau = 1.0
-    #epsilon = [(0, 1.0), (10000, 0.05)]
-}
+    run_rllib_example_script_experiment(config, args)

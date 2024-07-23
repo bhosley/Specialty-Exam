@@ -12,10 +12,21 @@
         "HADDPG",
         "isopen",
         "keepref",
+        "logdir",
+        "loguniform",
+        "monoid",
+        "obss",
+        "randn",
+        "rews",
         "Rllib",
         "surfarray",
         "targ",
+        "tensorboard",
+        "terminateds",
+        "timesteps",
+        "truncateds",
         "unintuitively",
+        "wandb",
         "Zhong"
     ]
 }
