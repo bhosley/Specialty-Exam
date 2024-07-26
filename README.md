@@ -20,10 +20,6 @@ cd src
 
 ## Dr. Robbins Questions
 
-```bash
-
-```
-
 ### Multi-Agent Lunar Lander
 
 <!-- markdownlint-disable MD033 -->
