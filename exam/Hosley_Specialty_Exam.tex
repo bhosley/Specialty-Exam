@@ -24,6 +24,7 @@
 \usepackage{graphicx}
 \graphicspath{{../figures/}}
 \usepackage{subcaption}
+\usepackage{placeins}
 %\usepackage{multicol}
 %\usepackage[shortlabels]{enumitem}
 %\usepackage[table]{xcolor}
@@ -197,6 +198,7 @@ Below, I apply these distinctions to the cases proposed:
 \end{questions}
 
 
+\clearpage
 \section{Dr. Robbins' Questions}
 
 \begin{wraptable}{R}{0.45\linewidth}
@@ -252,20 +254,20 @@ also provided in \cref{app:dqn_exp} of this document.
 	\mintinline{bash}|--num-env-runners=5|, however, this overrides the 
 	default of 10, so we have chosen not to use it and to keep the default.
 	We use the 
-	\mint{bash}|python dqn_exp.py --sweep --num-samples=30 --num-env-runners=60|
+	\mint{bash}|python dqn_exp.py --sweep --num-samples=30 --num-env-runners=10|
 
 	\subsubsection*{Round 1 - Bad Results:}
 	In the first round of Parameter sweeping, a large number of training runs
 	failed to converge on reasonable results. This was somewhat surprising,
 	and when examining the parameters there was no immediately obvious pattern.
 	Adding the average number of steps per episode to the Comparison 
-	(\cref{fig:baseline_1}) shows consistently shorter episodes for poor
+	(\cref{fig:baseline_1_para}) shows consistently shorter episodes for poor
 	performance.
-	\begin{figure}
+	\begin{figure}[b]
 		\centering
-		\includegraphics[width=.75\linewidth]{baseline_1.png}
+		\includegraphics[width=.95\linewidth]{para_coord_baseline_1.png}
 		\caption{Lunar Lander Baseline Experiment 1 Hyperparameters}
-		\label{fig:baseline_1}
+		\label{fig:baseline_1_para}
 	\end{figure}
 	Further investigation showed that the observation space assigned to the 
 	environment from the RLlib registered lunar lander environment was
@@ -281,27 +283,41 @@ also provided in \cref{app:dqn_exp} of this document.
 	by a pull request to the maintainers of RLlib, a contribution to the 
 	open-source software I would like to attempt after the submission of this
 	exam.
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% --------------------------------- Edit Bar --------------------------------- %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-	\subsubsection*{Round 2 - Baseline Parameter Sweep:}
 	
-	%\begin{figure}
-	%	\centering
-	%	\includegraphics[width=.75\linewidth]{baseline_1.png}
-	%	\caption{Lunar Lander Baseline Experiment 1 Hyperparameters}
-	%	\label{fig:baseline_1}
-	%\end{figure}
-
-	%
-	%	Generate appropriate tables and figures to describe the results of your effort.
-	%
-
+	\subsubsection*{Round 2 - Baseline Parameter Sweep:}
+	To evaluate the parameters of the sweep I elect to  conduct a 
+	comparison with three different methods. I will use the same methods 
+	for the sweeps performed on the subsequent questions as well.
+	
+	As above, the parallel coordinates graph provides a visual comparison
+	of parameter values and a qualitative impression of the effects.
+	Second, I use the wandb api Parameter importance and correlation graph,
+	which provides an importance metric based on an algorithm from
+	\cite{howard2020deep} that combines a tree-based regression and 
+	Spearman rank correlation; and the standard	and Pearson correlation
+	metric. Finally, for a more quantitative metric I produce an ANOVA 
+	table using second order interactions of the hyperparameters.
+	
+	\begin{figure}
+		\centering
+		\includegraphics[width=.95\linewidth]{para_coord_baseline_2.png}
+		\caption{Lunar Lander Baseline Experiment 2 Hyperparameters}
+		\label{fig:baseline_2_para}
+	\end{figure}
+	\begin{figure}
+		\centering
+		\includegraphics[width=.5\linewidth]{importance_baseline_2.png}
+		\caption{Baseline Experiment 2 Hyperparameter Importance}
+		\label{fig:baseline_2_importance}
+	\end{figure}
+	
+	\Cref{fig:baseline_2_para} shows the parallel coordinates for this 
+	experiment's parameter sweep. Immediately this suggests that 
+	the n-step instances under-perform the single step instances.
+	The factor importance (\cref{fig:baseline_2_importance}) corroborates this.
+	Finally, we execute the ANOVA in \cref{tab:anova_baseline},
+	and find that the \(\sigma\) parameter has a statistically significant
+	effect on the final performance, particular as an interaction variable.
 \end{questions}
 
 \subsection*{Multi-Agent Lunar Lander}
@@ -376,6 +392,9 @@ The effective result is that if two lander's legs touch it is not treated
 as a crash, however, if one lander's legs touch another's body module
 it is treated as a crash and thus a failure.
 
+In addition to being available on the associated github, the new environment
+code is included in \cref{app:ma_lander}
+
 \begin{questions}
 \setcounter{question}{1}
 	\question \textbf{Formulate a Markov Game:}
@@ -435,68 +454,335 @@ it is treated as a crash and thus a failure.
         & - 100|\omega_n(t)| & \text{Tilt}
     \end{align*}
 
-	\question \textbf{DQN Single-Agent Controller:}
-	This problem was approached using a wrapper class around the
-	custom multi-agent environment to translate the between the 
-	multi-agent environment and single-agent policy. 
-	The proxy single-agent state/observation was formed by simply 
-	concatenating the state vectors of each agent.
 
-	The modified action space for this problem is
-	\(\mathcal{B} \equiv \mathcal{A}^N\).
-	To relate the two action spaces for this problem I use the function,
-	\[ b = \sum_{}^{} a_n \times \dim(a)^n. \]
-	Then to translate the modified action into the agent-action vector 
-	necessary for the multi-agent environment I use the following function,
-	\[ \mathbf{a} = \{b/\dim(a)^n \mod\dim(a) \}_{n\in N} \] which 
-	relies on \(\dim(\mathcal{A}_n)=\dim(\mathcal{A}_m)\forall\ n,m\in N\),
-	an assumption that I note as it is true for this problem, 
-	limits some generality.
-	The policy can thus be represented as \(\pi(b \big| [s_n]_{n\in N})\).
+    \question \textbf{DQN Single-Agent Controller:}
+    This problem was approached using a wrapper class around the
+    custom multi-agent environment to translate the between the 
+    multi-agent environment and single-agent policy. 
+    The proxy single-agent state/observation was formed by simply 
+    concatenating the state vectors of each agent.
 
-	Finally, the experiment can be replicated using the command:	
-\mint{bash}|python dqn_exp.py --SA --sweep --num-samples=30 --num-env-runners=30|
-	
+    The modified action space for this problem is
+    \(\mathcal{B} \equiv \mathcal{A}^N\).
+    To relate the two action spaces for this problem I use the function,
+    \[ b = \sum_{}^{} a_n \times \dim(a)^n. \]
+    Then to translate the modified action into the agent-action vector 
+    necessary for the multi-agent environment I use the following function,
+    \[ \mathbf{a} = \{b/\dim(a)^n \mod\dim(a) \}_{n\in N} \] which 
+    relies on \(\dim(\mathcal{A}_n)=\dim(\mathcal{A}_m)\forall\ n,m\in N\),
+    an assumption that I note as it is true for this problem, 
+    limits some generality.
+    The policy can thus be represented as \(\pi(b \big| [s_n]_{n\in N})\).
 
-	%
-	%	Generate appropriate tables and figures to describe the results of your effort.
-	%
+    Finally, the experiment can be replicated using the command:	
+\mint{bash}|python dqn_exp.py --SA --sweep --num-samples=30 --num-env-runners=10|
+%
+    \begin{figure}
+        \centering
+        \includegraphics[width=.90\linewidth]{para_coord_sa.png}
+        \caption{Single-agent Control Hyperparameter Sweep}
+        \label{fig:sa_para}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics[width=.5\linewidth]{importance_sa.png}
+        \caption{Single-agent Control Hyperparameter Importance}
+        \label{fig:sa_importance}
+    \end{figure}
+%
+    \Cref{fig:sa_para} shows the results of the parameter sweep for this
+    experiment. It appears from this information that there are no clear
+    patterns suggesting what the optimal values are for the hyperparameters.
+    Next, we consult \cref{fig:sa_importance}. 
+    From these metrics we do 
+    see some indication that the \(\tau\) and \(n\)-step parameters
+    may hold some importance for the final performance.
+    And finally, the ANOVA table in \cref{tab:anova_sa}, shows 
+    a statistical significance associated with the \(\sigma\)
+    parameter. 
+
+    I interpret the high statistical significance but extremely low
+    correlation of the \(\sigma\) parameter to suggest that the mid-%
+    distribution value has a tendency to produce the best results.
+    The superlative instance has a \(\sigma\) parameter near this \(0.5\),
+    but overall, it appears that the algorithm is fairly resilient
+    to Hyperparameter tuning.
 
 
-	\question \textbf{NoPS - No Parameter Sharing:}
-	This experiment uses a distinct policy for each agent, 
-	\(\pi_n(a_n|s_n)\),
-	and can be replicated using:
-\mint{bash}|python src/dqn_exp.py --NoPS --sweep --num-samples=30 --num-env-runners=30|
-	
+    \question \textbf{NoPS - No Parameter Sharing:}
+    This experiment uses a distinct policy for each agent, 
+    \(\pi_n(a_n|s_n)\), and can be replicated using:
+\mint{bash}|python src/dqn_exp.py --NoPS --sweep --num-samples=30 --num-env-runners=10|
+%
+    \begin{figure}
+        \centering
+        \includegraphics[width=.95\linewidth]{para_coord_nops.png}
+        \caption{No Parameter Sharing Hyperparameter Sweep}
+        \label{fig:nops_para}
+    \end{figure}
+%
+    The parameter sweep results for this experiment can be seen in 
+    \cref{fig:nops_para}. There doesn't appear to be any extremely 
+    clear or significant patterns from this parallel comparison.
 
-	%
-	%	Generate appropriate tables and figures to describe the results of your effort.
-	%
-	
-	\question \textbf{FuPS - Full Parameter Sharing:}
-	This experiment uses a shared policy for each agent, 
-	\(\pi(a_n|s_n)\),
-	and can be replicated using:
-\mint{bash}|python src/dqn_exp.py --FuPS --sweep --num-samples=30 --num-env-runners=30|
+    There are, however, several observations of interest that are not
+    directly concerning the hyperparameters. First, is a generally poor 
+    performance for instances that produce longer average episode length.
+    Second, unlike the parameter sharing control, this consistently converged
+    on a result that produced a positive reward in every case.
+    I attribute this partially to sample size, but also note that this
+    result is consistent with have two separate policies; that in order
+    for the final mean episode reward to be negative, both policies would 
+    have to converge to poor behavior.
+    This may also explain the more even distribution of average returns
+    between the instances of this experiment.
 
-	%
-	%	Generate appropriate tables and figures to describe the results of your effort.
-	%
+    \begin{figure}
+        \centering
+        \includegraphics[width=.5\linewidth]{importance_nops.png}
+        \caption{No Parameter Sharing Hyperparameter Importance}
+        \label{fig:nops_importance}
+    \end{figure}
 
-	\question \textbf{Results Comparisons:}
+    \begin{figure}%[H]
+        \begin{subfigure}{.48\textwidth}
+            \centering
+            \includegraphics[width=\linewidth]{learn_curve_nops_0.png}
+            \caption{Agent 0 Reward}
+        \end{subfigure}
+        \begin{subfigure}{.48\textwidth}
+            \centering
+            \includegraphics[width=\linewidth]{learn_curve_nops_1.png}
+            \caption{Agent 1 Reward}
+        \end{subfigure}
+        \caption{No-parameter Sharing Learning Curves, 
+            average reward \(\times\) training iteration}
+        \label{fig:nops_learn_curves}
+    \end{figure}
+
+    Next, \cref{fig:nops_importance} shows the parameter importance metrics,
+    which similarly suggests no strong relation between the Hyperparameter
+    values and results, which is further corroborated in \cref{tab:anova_nops}
+    which shows no statistically significant first or second order
+    relationship between between the parameters and the final results.
+%
+    Finally, I present \cref{fig:nops_learn_curves} which shows the learning 
+    curves of the agents from 10 instances of this experiment. 
+    The resulting curves are consistent with pairs of agents that are
+    learning differently. \\ \\ 
+
+    \phantom{text} \\ \\
+
+
+    \question \textbf{FuPS - Full Parameter Sharing:}
+    This experiment uses a shared policy for each agent, 
+    \(\pi(a_n|s_n)\), and can be replicated using:
+\mint{bash}|python src/dqn_exp.py --FuPS --sweep --num-samples=30 --num-env-runners=10|
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=.95\linewidth]{para_coord_fups.png}
+        \caption{Full Parameter Sharing Hyperparameter Sweep}
+        \label{fig:fups_para}
+    \end{figure}
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=.5\linewidth]{importance_fups.png}
+        \caption{Full Parameter Sharing Hyperparameter Importance}
+        \label{fig:fups_importance}
+    \end{figure}
+
+    The parameter sweep results for this experiment can be seen in 
+    \cref{fig:fups_para}, once again it appears that there is a 
+    slightly higher performance result from a low or no n-step parameter.
+    Further, when considering the additional compute required to execute
+    the higher \(n\) instances, it is likely to be net negative.
+    \Cref{fig:fups_importance} supports the high performance from lower \(n\).
+    Further, between the two figures, some support in favor of a \(\tau>0.5\).
+    However, the ANOVA results (\cref{tab:anova_fups}) suggest that these
+    may not be statistically significant.
+
+\question \textbf{Results Comparisons:}
+
+    \begin{table}[h]
+        \centering
+        \begin{tabular}{l cccc}
+            Control & \(\tau\) & \(\sigma\) & N-Step & Adam-\(\epsilon\) \\
+            \midrule
+            Single Agent & 0.5 & 0.6 & 1 & 1e-5\\
+            NoPS & 0.75 & 0.5 & 1 & 1e-7 \\
+            FuPS & 0.75 & 0.5 & 1 & 1e-8 \\
+        \end{tabular}
+        \caption{Hyperparameters used for control comparisons.}
+        \label{tab:comp_parameters}
+    \end{table}
+
+For the comparison I ran 10 instances of each algorithm using the 
+parameters in \cref{tab:comp_parameters}, which were values near 
+those of the superlative performers in the previous sections.
+Some consideration was given to the default values of the DQN implementation. 
+It may be noted that Mnih et al. \cite{mnih2015} intended for their algorithm 
+to be resilient and require minimal adjustments.
+The results seen in the previous sections seem to fit that intent,
+with exception to certain more extreme settings.
+
+\begin{figure}[b]
+    \centering
+    \begin{subfigure}{.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{ep_return_min.png}
+        \caption{Minimum Return}
+    \end{subfigure}
+    \hfil
+    \begin{subfigure}{.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{ep_return_max.png}
+        \caption{Maximum Return}
+    \end{subfigure}
+    \begin{subfigure}{.65\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{ep_return_mean.png}
+        \caption{Mean Return}
+    \end{subfigure}
+    \caption{Returns by Episodes}
+    \label{fig:ep_returns}
+\end{figure}
+
+\Cref{fig:ep_returns} shows learning curve aggregates for each of the 
+evaluated algorithms.
+From these results we see that the single-agent consistently 
+under-performing the other algorithms, particularly, that after 
+250 episodes every instance's average was below the average of every 
+instance of the other algorithms.
+Additionally, the variance in the average performance of the single-agent
+control algorithm was significantly greater than the other two algorithms.
+I attribute both of these observations to the larger action space and reduced
+ability to explore when using this control method.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.63\linewidth]{cpu_use.png}
+    \caption{CPU Utilization}
+    \label{fig:cpu_use}
+\end{figure}
+
+\Cref{fig:cpu_use} shows a measure of performance of the algorithms 
+from the perspective of computational requirements.
+The CPU utilization for the single-agent control was by far the most 
+consistent of the three, where the full-parameter sharing was generally
+higher while occasionally dropping to a utilization similar to the 
+single-agent control. No-parameter sharing appears to have spent equal
+time between these two values. 
+It is unclear from the experiments conducted for this exam why this would
+be the case. I would have expected that the NoPS instance would 
+have a generally higher utilization than the others.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.63\linewidth]{memory_use.png}
+    \caption{Memory Usage (MB)}
+    \label{fig:memory_use}
+\end{figure}
+
+The memory utilization is about the same for each algorithm 
+(\cref{fig:memory_use}). Given that the algorithms use the same deep network 
+architecture for their value functions, it reasonably follows that the memory 
+usage would be similar, with small differences by the nature of the non-sharing 
+networks are two separate networks it would not be surprising for those 
+instances to have greater memory use, which appears to be the case by a
+small margin.
+
+This same graph highlights perhaps the most significant advantage of 
+the single agent control, which was an execution time almost half
+as long as the others. While this was not an advantage that I had 
+considered prior to the experiment it seems that it would follow
+that the single agent controller uses the DQN once per step for each 
+action and afterwards updates one network, where as the others would 
+have to do so twice.
+
 \end{questions}
 
-	%
-	%	Generate appropriate tables and figures to describe the results of your effort.
-	%
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% --------------------------------- Edit Bar --------------------------------- %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+
+
+
+
+
+\clearpage
 \section{Dr. Cox's Questions}
-%\begin{questions}
-%	\question
-%	\question
-%\end{questions}
+\begin{questions}
+    \question
+
+    I concur with the probable necessity of narrowing the scope of 
+    contribution one, particularly to maintain the feasibility of the 
+    proposed timeline.
+
+    \begin{parts}
+        \part \textbf{Cooperative Tasks:}
+            The SISL (Stanford Intelligent Systems Laboratory) environments
+            are presented by Gupta et. al. in \cite{gupta2017cooperative}.
+            Two of the task in particular I believe to be usable, 
+            \emph{Pursuit} and \emph{Waterworld}. The latter of the two 
+            can be instantiated as a cooperate-competitive task.
+            \emph{Multiwalker} may be included, but that will be determined
+            by whether or no I am able to get the task to function as
+            expected with different numbers of walkers from the default 3.
+            The two former environments are known to operate with a wide
+            range of numbers of agents.
+
+            The MPE (Multi Particle Environment) is simple and has a variety
+            of available tasks. However, among the manufacturer included
+            tasks, \emph{Simple Spread} is probably the only one suitable
+            for the proposed evaluated. \emph{Simple Spread} is a 
+            task that is essentially a zone-coverage/task-assignment
+            type problem.
+
+        \part \textbf{Competitive Tasks:}
+            To maintain a greater focus on the adaptability and cooperation
+            aspect of agent-groups I believe that it would be best to omit
+            any pure competitive tasks. 
+            However, I intend to include cooperative-competitive tasks.
+            As an example of this, let us take \emph{Water World};
+            when the task is set such that a single agent can complete
+            (`consume the food') it becomes a pure competitive environment,
+            however, increasing that value is intended to produce emergent
+            cooperation as the goal requires \(n\) agents to simultaneously
+            activate the goal.
+        \part \textbf{Algorithms:}
+            \begin{table}
+                \begin{tabular}{cccc}
+                    Base Algorithm & MARL & HARL & Action Space \\
+                    PPO & MAPPO & HAPPO & \\
+                    DQN & & & 
+                \end{tabular}
+            \end{table}
+        \part \textbf{Environments:}
+            
+            % Water World - Cont. Action
+            % Pursuit - Disc. Action
+            % MPE - Disc. Action
+            % Smax?
+            % MAgent % https://marllib.readthedocs.io/en/latest/handbook/env.html#air-combat
+            % Close Air Combat % https://github.com/liuqh16/CloseAirCombat
+            % GRF (Research Football)
+            % Robot Warehouse? (Jumanji Env.)
+        \part \textbf{League:}
+            % Agree here that scope may need to narrow, 
+            % possible to re-attack as a later paper
+    \end{parts}
+    \question
+\end{questions}
 
 \begin{comment}
 Problem 1:
@@ -522,9 +808,11 @@ Problem 2:
 
 
 Execute a very small practical experiment of contribution 1: For example, choose 1 MARL
-algorithm and 1 HARL algorithm, choose 1 environment with a cooperative task. Write up a minipaper on this experiment. You should have an introduction that motivates the problem, a brief
-literature review, a detailed methodology section along with a summary of results. The goal of
-this question is to test your ability to implement a very small scale experiment aligned with your
+algorithm and 1 HARL algorithm, choose 1 environment with a cooperative task. Write up a minipaper on this experiment. 
+You should have an introduction that motivates the problem, a brief
+literature review, a detailed methodology section along with a summary of results. 
+The goal of this question is to test your ability to implement a very small scale 
+experiment aligned with your
 proposed contribution 1.
 
 
@@ -548,7 +836,12 @@ proposed contribution 1.
 
 \clearpage
 \section{Multi-Agent Lunar Lander}
-\label{app:ma-lander}
+\label{app:ma_lander}
 \inputminted[fontsize=\footnotesize, linenos]{python}{../src/multi_lander.py}
+
+\clearpage
+\section{ANOVA Tables}
+\label{app:anova_tables}
+\input{anova_tables.tex}
 
 \end{document}

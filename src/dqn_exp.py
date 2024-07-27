@@ -16,24 +16,7 @@ For logging to your WandB account, use:
 `--wandb-key=[your WandB API key] --wandb-project=[some project name]
 --wandb-run-name=[optional: WandB run name (within the defined project)]`
 
-
-
-
-
-
-python dqn_exp.py \
-    --num-env-runners=5 \
-    --stop-reward=200 \
-    --wandb-key=913528a8e92bf601b6eb055a459bcc89130c7f5f \
-    --wandb-project=lunar_lander_test
-
-tensorboard --logdir logs/fit
 """
-# --evaluation-duration=5 \ # Default uses 10
-# --checkpoint-at-end
-# --num-samples=30
-# result_dict['env_runners']['episode_return_mean']
-
 
 import numpy as np
 from gymnasium import Wrapper, spaces
@@ -158,10 +141,15 @@ class SingleAgentWrapper(Wrapper):
                         for i,a in enumerate(self.agents)}
         obss, rews, terminations, _, _ = self.env.step(action_list)
         obs = self.observe()
-        reward = sum(rews.values())
-        term = (all(terminations.values()) or self.env.game_over 
-            or np.any(obs <= self.observation_space.low) 
-            or np.any(obs >= self.observation_space.high))
+        # Calculate reward, but drop terminated agent, else get exploding values
+        reward = sum(np.array(rews.values()) * 
+                     np.invert(list(terminations.values())))
+        term = (self.env.game_over or all(terminations.values()))
+        if (term or np.any(obs < self.observation_space.low) or 
+                    np.any(obs > self.observation_space.high)):
+            term = True
+            obs = np.clip(obs, self.observation_space.low, 
+                          self.observation_space.high)
         return obs, reward, term, False, {}
 
 # Registry is necessary for functional passing later.

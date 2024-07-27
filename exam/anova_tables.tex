@@ -1,0 +1,208 @@
+\scriptsize
+
+\subsection{Baseline Lander}
+\label{tab:anova_baseline}
+\begin{verbatim}
+    OLS Regression Results                            
+    ==============================================================================
+    Dep. Variable:                  Score   R-squared:                       0.966
+    Model:                            OLS   Adj. R-squared:                  0.902
+    Method:                 Least Squares   F-statistic:                     15.12
+    Date:                Mon, 22 Jul 2024   Prob (F-statistic):           5.46e-05
+    Time:                        22:33:51   Log-Likelihood:                -131.47
+    No. Observations:                  30   AIC:                             302.9
+    Df Residuals:                      10   BIC:                             331.0
+    Df Model:                          19                                         
+    Covariance Type:            nonrobust                                         
+    ========================================================================================
+                                coef    std err          t      P>|t|      [0.025      0.975]
+    ----------------------------------------------------------------------------------------
+    Intercept               70.1409    135.922      0.516      0.617    -232.712     372.994
+    tau                  -5.201e+07   2.25e+07     -2.313      0.043   -1.02e+08    -1.9e+06
+    sigma                   33.4494     24.068      1.390      0.195     -20.178      87.077
+    n_step                 844.5087    373.852      2.259      0.047      11.515    1677.502
+    adam_eps               891.1404    278.946      3.195      0.010     269.611    1512.670
+    ep_len_mean             -0.0763      0.129     -0.589      0.569      -0.365       0.212
+    tau_pow_2             1020.8171    418.234      2.441      0.035      88.934    1952.700
+    tau_sigma             2.216e+06   1.12e+06      1.981      0.076   -2.76e+05    4.71e+06
+    tau_n_step            1.156e+07    7.5e+06      1.542      0.154   -5.15e+06    2.83e+07
+    tau_adam_eps            4.7e+07   2.06e+07      2.283      0.046    1.12e+06    9.29e+07
+    tau_ep_len_mean       3824.1099   8513.828      0.449      0.663   -1.51e+04    2.28e+04
+    sigma_pow_2              5.0039      1.093      4.580      0.001       2.569       7.438
+    sigma_n_step          -158.6486     39.804     -3.986      0.003    -247.337     -69.960
+    sigma_adam_eps         -66.9395     34.419     -1.945      0.080    -143.629       9.750
+    sigma_ep_len_mean       -0.0181      0.008     -2.187      0.054      -0.037       0.000
+    n_step_pow_2           -37.5373    228.941     -0.164      0.873    -547.650     472.576
+    n_step_adam_eps      -1089.7884    257.119     -4.238      0.002   -1662.686    -516.891
+    n_step_ep_len_mean      -0.0624      0.116     -0.539      0.602      -0.320       0.195
+    adam_eps_pow_2        -123.4370    238.454     -0.518      0.616    -654.745     407.871
+    adam_eps_ep_len_mean    -0.0525      0.071     -0.740      0.476      -0.211       0.106
+    ep_len_mean_pow_2     3.182e-05   2.77e-05      1.150      0.277   -2.98e-05    9.35e-05
+    ==============================================================================
+    Omnibus:                        5.720   Durbin-Watson:                   1.321
+    Prob(Omnibus):                  0.057   Jarque-Bera (JB):                4.528
+    Skew:                          -0.944   Prob(JB):                        0.104
+    Kurtosis:                       3.246   Cond. No.                     6.21e+16
+    ==============================================================================
+
+    Notes:
+    [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+    [2] The smallest eigenvalue is 8.67e-20. This might indicate that there are
+    strong multicollinearity problems or that the design matrix is singular.
+\end{verbatim}
+
+\clearpage
+\subsection{Single-Agent Control}
+\label{tab:anova_sa}
+\begin{verbatim}
+    OLS Regression Results                            
+    ==============================================================================
+    Dep. Variable:                  Score   R-squared:                       0.868
+    Model:                            OLS   Adj. R-squared:                  0.616
+    Method:                 Least Squares   F-statistic:                     3.449
+    Date:                Tue, 23 Jul 2024   Prob (F-statistic):             0.0247
+    Time:                        22:13:46   Log-Likelihood:                -123.07
+    No. Observations:                  30   AIC:                             286.1
+    Df Residuals:                      10   BIC:                             314.2
+    Df Model:                          19                                         
+    Covariance Type:            nonrobust                                         
+    ========================================================================================
+                               coef    std err          t      P>|t|      [0.025      0.975]
+    ----------------------------------------------------------------------------------------
+    Intercept              415.8797    180.210      2.308      0.044      14.346     817.413
+    tau                   1.001e+04   1.98e+06      0.005      0.996   -4.39e+06    4.41e+06
+    sigma                  -62.7730     18.266     -3.437      0.006    -103.473     -22.073
+    n_step                -168.8124    259.877     -0.650      0.531    -747.856     410.231
+    adam_eps                87.5099    200.547      0.436      0.672    -359.336     534.356
+    ep_len_mean              0.1006      0.244      0.413      0.688      -0.442       0.643
+    tau_pow_2              311.4753    314.546      0.990      0.345    -389.377    1012.328
+    tau_sigma            -2.468e+04   2.05e+05     -0.121      0.906   -4.81e+05    4.31e+05
+    tau_n_step            9.437e+06   6.03e+06      1.566      0.148   -3.99e+06    2.29e+07
+    tau_adam_eps         -4.769e+06   3.13e+06     -1.522      0.159   -1.18e+07    2.21e+06
+    tau_ep_len_mean      -2349.7876   2023.141     -1.161      0.272   -6857.627    2158.052
+    sigma_pow_2              2.4038      0.599      4.012      0.002       1.069       3.739
+    sigma_n_step             1.2135     10.117      0.120      0.907     -21.329      23.756
+    sigma_adam_eps           8.5121      5.914      1.439      0.181      -4.665      21.689
+    sigma_ep_len_mean        0.0263      0.010      2.674      0.023       0.004       0.048
+    n_step_pow_2            53.2984    129.963      0.410      0.690    -236.278     342.875
+    n_step_adam_eps        231.7169    252.934      0.916      0.381    -331.855     795.289
+    n_step_ep_len_mean      -0.0407      0.226     -0.180      0.861      -0.545       0.464
+    adam_eps_pow_2        -126.2286    110.253     -1.145      0.279    -371.888     119.430
+    adam_eps_ep_len_mean    -0.1330      0.112     -1.188      0.262      -0.383       0.116
+    ep_len_mean_pow_2     -8.01e-06      0.000     -0.056      0.957      -0.000       0.000
+    ==============================================================================
+    Omnibus:                        8.754   Durbin-Watson:                   1.550
+    Prob(Omnibus):                  0.013   Jarque-Bera (JB):                7.490
+    Skew:                          -0.903   Prob(JB):                       0.0236
+    Kurtosis:                       4.651   Cond. No.                     5.78e+15
+    ==============================================================================
+    
+    Notes:
+    [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+    [2] The smallest eigenvalue is 4.72e-19. This might indicate that there are
+    strong multicollinearity problems or that the design matrix is singular.
+\end{verbatim}
+
+\clearpage
+\subsection{No Parameter Sharing}
+\label{tab:anova_nops}
+\begin{verbatim}
+    OLS Regression Results                            
+    ==============================================================================
+    Dep. Variable:                  Score   R-squared:                       0.864
+    Model:                            OLS   Adj. R-squared:                  0.605
+    Method:                 Least Squares   F-statistic:                     3.339
+    Date:                Tue, 23 Jul 2024   Prob (F-statistic):             0.0276
+    Time:                        12:14:05   Log-Likelihood:                -138.94
+    No. Observations:                  30   AIC:                             317.9
+    Df Residuals:                      10   BIC:                             345.9
+    Df Model:                          19                                         
+    Covariance Type:            nonrobust                                         
+    ========================================================================================
+                               coef    std err          t      P>|t|      [0.025      0.975]
+    ----------------------------------------------------------------------------------------
+    Intercept              425.0804    244.891      1.736      0.113    -120.571     970.732
+    tau                  -2.892e+06   2.95e+06     -0.980      0.350   -9.47e+06    3.68e+06
+    sigma                  -13.7033     25.615     -0.535      0.604     -70.776      43.370
+    n_step                 -60.6324    363.894     -0.167      0.871    -871.440     750.175
+    adam_eps              -101.7131    477.938     -0.213      0.836   -1166.626     963.200
+    ep_len_mean              0.0414      0.187      0.222      0.829      -0.375       0.458
+    tau_pow_2              -73.8498    253.375     -0.291      0.777    -638.404     490.704
+    tau_sigma             -9.58e+04   2.43e+05     -0.394      0.702   -6.37e+05    4.45e+05
+    tau_n_step           -1.973e+06   4.24e+06     -0.465      0.652   -1.14e+07    7.47e+06
+    tau_adam_eps          3.361e+06   3.01e+06      1.117      0.290   -3.34e+06    1.01e+07
+    tau_ep_len_mean       1460.5816    946.981      1.542      0.154    -649.424    3570.587
+    sigma_pow_2              0.4027      1.422      0.283      0.783      -2.765       3.571
+    sigma_n_step           -17.9749     30.768     -0.584      0.572     -86.530      50.580
+    sigma_adam_eps          20.5071     19.299      1.063      0.313     -22.494      63.508
+    sigma_ep_len_mean        0.0005      0.006      0.087      0.933      -0.012       0.013
+    n_step_pow_2             5.5271    268.271      0.021      0.984    -592.218     603.273
+    n_step_adam_eps        100.0307    249.637      0.401      0.697    -456.195     656.256
+    n_step_ep_len_mean      -0.0024      0.080     -0.030      0.977      -0.180       0.175
+    adam_eps_pow_2          46.3900    267.727      0.173      0.866    -550.143     642.923
+    adam_eps_ep_len_mean    -0.0622      0.095     -0.654      0.528      -0.274       0.150
+    ep_len_mean_pow_2    -2.231e-05   3.99e-05     -0.560      0.588      -0.000    6.65e-05
+    ==============================================================================
+    Omnibus:                        2.859   Durbin-Watson:                   1.983
+    Prob(Omnibus):                  0.239   Jarque-Bera (JB):                1.678
+    Skew:                          -0.548   Prob(JB):                        0.432
+    Kurtosis:                       3.378   Cond. No.                     1.63e+16
+    ==============================================================================
+    
+    Notes:
+    [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+    [2] The smallest eigenvalue is 2.28e-18. This might indicate that there are
+    strong multicollinearity problems or that the design matrix is singular.
+\end{verbatim}
+
+\clearpage
+\subsection{Full Parameter Sharing}
+\label{tab:anova_fups}
+\begin{verbatim}
+    OLS Regression Results                            
+    ==============================================================================
+    Dep. Variable:                  Score   R-squared:                       0.953
+    Model:                            OLS   Adj. R-squared:                  0.840
+    Method:                 Least Squares   F-statistic:                     8.450
+    Date:                Tue, 23 Jul 2024   Prob (F-statistic):            0.00219
+    Time:                        12:16:56   Log-Likelihood:                -128.54
+    No. Observations:                  28   AIC:                             297.1
+    Df Residuals:                       8   BIC:                             323.7
+    Df Model:                          19                                         
+    Covariance Type:            nonrobust                                         
+    ========================================================================================
+                                coef    std err          t      P>|t|      [0.025      0.975]
+    ----------------------------------------------------------------------------------------
+    Intercept              175.2457    162.159      1.081      0.311    -198.692     549.184
+    tau                    186.4124    296.485      0.629      0.547    -497.284     870.109
+    sigma                 1043.0267    402.067      2.594      0.032     115.859    1970.194
+    n_step                2.574e+06   9.38e+06      0.274      0.791   -1.91e+07    2.42e+07
+    adam_eps               -95.1023     52.882     -1.798      0.110    -217.048      26.843
+    ep_len_mean             -0.0065      0.113     -0.057      0.956      -0.266       0.253
+    tau_pow_2              190.7520    308.769      0.618      0.554    -521.270     902.774
+    tau_sigma              287.9223    339.789      0.847      0.421    -495.633    1071.478
+    tau_n_step            2.957e+07   2.43e+07      1.215      0.259   -2.65e+07    8.57e+07
+    tau_adam_eps           -11.6668     25.878     -0.451      0.664     -71.341      48.008
+    tau_ep_len_mean         -0.1573      0.138     -1.140      0.287      -0.476       0.161
+    sigma_pow_2           -723.8557    329.556     -2.196      0.059   -1483.814      36.103
+    sigma_n_step          1.668e+07   1.05e+07      1.592      0.150   -7.48e+06    4.08e+07
+    sigma_adam_eps         -64.5262     24.704     -2.612      0.031    -121.494      -7.559
+    sigma_ep_len_mean       -0.1967      0.106     -1.850      0.101      -0.442       0.048
+    n_step_pow_2          6058.0985   5450.747      1.111      0.299   -6511.346    1.86e+04
+    n_step_adam_eps      -1.209e+06    1.3e+06     -0.933      0.378    -4.2e+06    1.78e+06
+    n_step_ep_len_mean   -1.043e+04   6264.673     -1.665      0.135   -2.49e+04    4018.744
+    adam_eps_pow_2           5.8045      2.667      2.176      0.061      -0.346      11.955
+    adam_eps_ep_len_mean     0.0344      0.019      1.799      0.110      -0.010       0.078
+    ep_len_mean_pow_2     1.923e-05   3.59e-05      0.535      0.607   -6.36e-05       0.000
+    ==============================================================================
+    Omnibus:                        1.813   Durbin-Watson:                   2.036
+    Prob(Omnibus):                  0.404   Jarque-Bera (JB):                1.473
+    Skew:                          -0.545   Prob(JB):                        0.479
+    Kurtosis:                       2.725   Cond. No.                     1.20e+17
+    ==============================================================================
+
+    Notes:
+    [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+    [2] The smallest eigenvalue is 3.25e-20. This might indicate that there are
+    strong multicollinearity problems or that the design matrix is singular.
+\end{verbatim}
