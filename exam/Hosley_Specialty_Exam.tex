@@ -6,6 +6,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{libertine}
+\usepackage{pifont}
 
 % --- Math ---
 \usepackage{amssymb}
@@ -21,11 +22,12 @@
 
 % --- Other Common Packages ---
 \usepackage{booktabs}
+\usepackage{multirow}
+%\usepackage{multicol}
 \usepackage{graphicx}
 \graphicspath{{../figures/}}
 \usepackage{subcaption}
 \usepackage{placeins}
-%\usepackage{multicol}
 %\usepackage[shortlabels]{enumitem}
 %\usepackage[table]{xcolor}
 \usepackage{wrapfig}
@@ -544,7 +546,7 @@ code is included in \cref{app:ma_lander}
         \label{fig:nops_importance}
     \end{figure}
 
-    \begin{figure}%[H]
+    \begin{figure}[H]
         \begin{subfigure}{.48\textwidth}
             \centering
             \includegraphics[width=\linewidth]{learn_curve_nops_0.png}
@@ -569,9 +571,8 @@ code is included in \cref{app:ma_lander}
     Finally, I present \cref{fig:nops_learn_curves} which shows the learning 
     curves of the agents from 10 instances of this experiment. 
     The resulting curves are consistent with pairs of agents that are
-    learning differently. \\ \\ 
+    learning differently. 
 
-    \phantom{text} \\ \\
 
 
     \question \textbf{FuPS - Full Parameter Sharing:}
@@ -579,14 +580,14 @@ code is included in \cref{app:ma_lander}
     \(\pi(a_n|s_n)\), and can be replicated using:
 \mint{bash}|python src/dqn_exp.py --FuPS --sweep --num-samples=30 --num-env-runners=10|
 
-    \begin{figure}
+    \begin{figure}[H]
         \centering
         \includegraphics[width=.95\linewidth]{para_coord_fups.png}
         \caption{Full Parameter Sharing Hyperparameter Sweep}
         \label{fig:fups_para}
     \end{figure}
 
-    \begin{figure}
+    \begin{figure}[H]
         \centering
         \includegraphics[width=.5\linewidth]{importance_fups.png}
         \caption{Full Parameter Sharing Hyperparameter Importance}
@@ -704,21 +705,6 @@ have to do so twice.
 \end{questions}
 
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% --------------------------------- Edit Bar --------------------------------- %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
-
-
-
-
-
-
-
 \clearpage
 \section{Dr. Cox's Questions}
 \begin{questions}
@@ -759,69 +745,153 @@ have to do so twice.
             however, increasing that value is intended to produce emergent
             cooperation as the goal requires \(n\) agents to simultaneously
             activate the goal.
+
         \part \textbf{Algorithms:}
-            \begin{table}
-                \begin{tabular}{cccc}
-                    Base Algorithm & MARL & HARL & Action Space \\
-                    PPO & MAPPO & HAPPO & \\
-                    DQN & & & 
-                \end{tabular}
-            \end{table}
+
+        \newcommand{\cmark}{\raisebox{2pt}{\large\hspace{1pt}\ding{51}}}
+        \begin{table}[h]
+            \centering
+            \begin{tabular}{ccccccc}
+                \toprule
+                Base Algorithm & MARL & HARL & RLlib & RLlib-Contrib & SB3 & Custom \\
+                \midrule %\multirow{2}*{PPO}
+                PPO & MAPPO &  & \rlap{\(\square\)}{\cmark} \\
+                PPO & & HAPPO & & & & \(\square\) \\
+                DDPG& MADDPG & & & \(\square\) \\
+                DDPG&       & HADDPG & & & & \(\square\) \\
+                TRPO& MATRPO & & & & \(\square\) \\
+                TRPO&       & HATRPO & & & & \(\square\) \\
+                TD3 & MATD3 & & & \(\square\) \\
+                TD3 &       & HATD3 & & & & \(\square\) \\
+                A2C & MAA2C & & & \(\square\) \\
+                A2C &       & HAA2C & & & & \(\square\) \\
+                \bottomrule
+            \end{tabular}
+            \caption{}
+            \label{tab:algos}
+            \vspace*{-1em}
+        \end{table}
+
+            \Cref{tab:algos} outlines the algorithms that I intend to try 
+            to utilize for contribution 1. They are broken up as to 
+            whether or not the original authors label the algorithm as a 
+            MARL of HARL algorithm. Next, they are labeled by a open checkbox 
+            corresponding to an open-source implementation that is available 
+            for the algorithm. 
+            Algorithms label RLlib are included in the base package, 
+            the -Contrib column are implementations that have not been fully 
+            tested and integrated into the main distribution of the package.
+            They work within the \emph{old-api} stack of RLlib, but may require
+            some updates to function appropriately with the environments
+            that I use.
+            %
+            The SB3 column refers to Stable-Baselines 3, another 
+            well-established open-source library that implements several 
+            well known RL algorithms, which may be imported and potentially 
+            registered as trainable within the RLlib API. 
+            Notably, Trust Region Policy Optimization (TRPO) is the only 
+            algorithm that would potentially utilize this style of 
+            implementation.
+
+            The custom column represents the algorithms proposed by 
+            \cite{zhong2024} which have been implemented in a library of 
+            their own, which is publicly available, but standalone. 
+            I appreciate that they made their code available, and provided
+            instruction on hwo to reproduce their results, however,
+            I do believe that there is benefit to conforming to the standards
+            of a more popular framework in order to facilitate extension
+            and application to other problems.
+            The structure of their code is good, and most importantly, 
+            consistent, so I anticipate that it should carry over well.
+            However, I ran into time constraints, and did not have enough time
+            to move the code over and test it appropriately for this exam.
+            I intend to do so in the time immediately following.
+
+            The check mark indicates algorithms that have been thoroughly
+            tested and function without issue for arbitrary environments
+            (provided that the environment is compliant with the API).
+
         \part \textbf{Environments:}
-            
-            % Water World - Cont. Action
-            % Pursuit - Disc. Action
-            % MPE - Disc. Action
-            % Smax?
-            % MAgent % https://marllib.readthedocs.io/en/latest/handbook/env.html#air-combat
-            % Close Air Combat % https://github.com/liuqh16/CloseAirCombat
-            % GRF (Research Football)
-            % Robot Warehouse? (Jumanji Env.)
+            \begin{figure}
+                \centering
+                \includegraphics[width=.63\linewidth]{sisl_envs.png}
+                \caption{Multiwalker, pursuit, and waterworld environments}
+                \label{fig:sisl_envs}
+            \end{figure}
+            \begin{table}
+                \centering
+                \begin{tabular}{ccc}
+                    \toprule
+                    Environment & Source & RLlib Tested \\
+                    \midrule
+                    Water World & SISL\cite{gupta2017cooperative} & \rlap{\(\square\)}{\cmark} \\
+                    Pursuit & SISL\cite{gupta2017cooperative} & \rlap{\(\square\)}{\cmark} \\
+                    Multiwalker & SISL\cite{gupta2017cooperative} & \rlap{\(\square\)}{\cmark} \\
+                    Multi-Particle Environment & Petting Zoo & \(\square\) \\
+                    SMAX & \cite{rutherford2023} & \(\square\) \\
+                    MAgent & \cite{zheng2017} & \(\square\) \\ % https://marllib.readthedocs.io/en/latest/handbook/env.html#air-combat
+                    %Close Air Combat &  & \\% https://github.com/liuqh16/CloseAirCombat
+                    %GRF  &  & \\
+                    %Robot Warehouse &  & \\
+                    %Vectorized Soccer &  & \\
+                    % &  & \\
+                    \bottomrule
+                \end{tabular}
+                \caption{Candidate Environments}
+                \label{tab:enviros}
+                \vspace*{-1em}
+            \end{table}
+            \Cref{tab:enviros} lists the environments that I would like 
+            to use as metrics for the algorithms.
+            As alluded to in parts (a) and (b), the key feature that I have 
+            used in picking these environments is that the variability
+            in the number of agents that the task supports.
+
+            The environments that I have confirmed to register without
+            issue with the RLlib API are the examples that I have described
+            in parts (a) and (b) of this exam question. 
+            However, there are other environments that I would like
+            to attempt to implement as well. 
+            At risk of being overly repetitive, a major advantage of 
+            working within an established API provides me the flexibility
+            to more easily extend the experiments to additional 
+            environments once they are compliant with the API, 
+            typically via wrapper.
+            Moreover, this provides some flexibility with regard to 
+            time and size of contribution 1.
+
         \part \textbf{League:}
-            % Agree here that scope may need to narrow, 
-            % possible to re-attack as a later paper
+            Evaluation of the league format is definitely something that is
+            becoming clearly a scope challenge, particularly with the timeline
+            concerns.
+            As I have been working on this exam, and exploring the framework
+            that I have been using for the experiments, I have been forced to 
+            reflect more deeply upon the individual components of the models.
+            I have become convinced that league play is something that should
+            be evaluated later, with closer proximity to curriculum design than 
+            where I am currently.
     \end{parts}
+
     \question
+    The following section is the \emph{mini-paper}. 
+    The biggest obstacle currently is, of course, time.
+    In the interest of time, the experiment presented does not
+    have the replications that I would deem necessary, but should
+    serve as a proof of functionality on ACE-hub.
+
+    While working on this exam I have discovered a potential limitation
+    with using ACE-hub. Long running scripts appear to generally proceed
+    without incident on the containers when disconnected; however, when 
+    utilizing an API that opens a port to connect to an external service, 
+    disconnecting from the web-based user interface appears to pause execution.
+    At the time of submission of this exam I have one workaround, 
+    which is to forego exporting the data during the experiment and instead
+    to export the results manually afterward.
 \end{questions}
-
-\begin{comment}
-Problem 1:
-
-
-Contribution 1 seems very broadly scoped, and somewhat ill defined (especially when compared
-to the well-defined and scoped contribution 2). Please add, at least the following, explicit details
-to contribution 1 in terms of:
-a. Which cooperative tasks will be explored?
-b. Which competitive tasks will be explored?
-c. Which algorithms will be explored?
-d. Which environments will be explored?
-e. Which league frameworks will be explored?
-Overall, I am looking for a significant expansion of the methodology of contribution 1 similar to
-what we would expect from the final manuscript. Since Contribution 1’s timeline overlaps
-significantly with June and July it is reasonable that such details should exist or can be developed.
-My concern is that contribution 1 may need to be rescoped to a narrower focus, or split into
-multiple papers each with a tighter focus.
-
-
-
-Problem 2:
-
-
-Execute a very small practical experiment of contribution 1: For example, choose 1 MARL
-algorithm and 1 HARL algorithm, choose 1 environment with a cooperative task. Write up a minipaper on this experiment. 
-You should have an introduction that motivates the problem, a brief
-literature review, a detailed methodology section along with a summary of results. 
-The goal of this question is to test your ability to implement a very small scale 
-experiment aligned with your
-proposed contribution 1.
-
-
-
-
-\end{comment}
-
+\include{mini_paper.tex}
 
 \clearpage
+
 \addcontentsline{toc}{section}{References}
 \printbibliography
 
